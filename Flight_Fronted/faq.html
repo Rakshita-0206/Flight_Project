@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FAQ | Flight Cost Intelligence</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="icon" href="https://img.icons8.com/fluency/48/airplane-mode-on.png" type="image/png">
+</head>
+<body>
+<nav class="navbar">
+  <div class="container navbar-inner">
+    <a href="index.html" class="navbar-brand"><div class="brand-icon"><i class="fas fa-plane"></i></div>Flight Cost Intelligence</a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html">Home</a></li><li><a href="compare.html">Compare</a></li>
+      <li><a href="route-finder.html">Route Finder</a></li><li><a href="predictor.html">Predictor</a></li>
+      <li><a href="optimizer.html">Optimizer</a></li>      <li><a href="heatmap.html">Heatmap</a></li>
+      <li><a href="visualizations.html">Visualizations</a></li>
+      <li><a href="faq.html" class="active">FAQ</a></li>
+    </ul>
+    <div class="nav-toggle" id="navToggle"><span></span><span></span><span></span></div>
+  </div>
+</nav>
+<section class="hero hero-sub" data-hero="faq">
+  <div class="hero-bg">
+    <img src="assets/images/sub-hero-faq.jpg" alt="Modern bright workspace">
+  </div>
+  <div class="hero-overlay"></div>
+  <div class="container text-center">
+    <h1>Frequently Asked Questions</h1>
+    <p>Everything you need to know about Flight Cost Intelligence.</p>
+  </div>
+</section>
+<section class="section">
+  <div class="container" style="max-width:760px;">
+    <div class="section-header"><h2>General</h2></div>
+    <div class="faq-item"><div class="faq-question">What is cost per km?<i class="fas fa-chevron-down faq-icon"></i></div><div class="faq-answer">Cost per kilometre (₹/km) is the flight price divided by the route distance. It normalises price so you can compare routes of very different lengths fairly. A short flight at ₹3,000 for 300 km (₹10/km) is actually more expensive per km than a long flight at ₹5,500 for 1,100 km (₹5/km).</div></div>
+    <div class="faq-item"><div class="faq-question">How are distances calculated?<i class="fas fa-chevron-down faq-icon"></i></div><div class="faq-answer">Distances are calculated using the Haversine formula, which computes the great-circle distance between two geographic coordinates. This gives the straight-line distance over Earth's surface, accurate to within ~0.3% — more than sufficient for comparing relative costs.</div></div>
+    <div class="faq-item"><div class="faq-question">Are the prices real-time?<i class="fas fa-chevron-down faq-icon"></i></div><div class="faq-answer">No. The prices are from a precomputed dataset that represents typical/historical fare averages for Indian domestic routes. They are indicative and intended for comparison purposes, not for actual booking decisions. Always check a live booking platform before purchasing.</div></div>
+    <div class="faq-item"><div class="faq-question">Which airports are covered?<i class="fas fa-chevron-down faq-icon"></i></div><div class="faq-answer">The system currently covers major Indian domestic airports including Delhi (DEL), Mumbai (BOM), Bangalore (BLR), Hyderabad (HYD), Chennai (MAA), Kolkata (CCU), Kochi (COK), Pune (PNQ), Ahmedabad (AMD), Jaipur (JAI), Goa (GOI), and more.</div></div>
+
+    <div class="section-header mt-4"><h2>Tools</h2></div>
+    <div class="faq-item"><div class="faq-question">How does the Compare tool work?<i class="fas fa-chevron-down faq-icon"></i></div><div class="faq-answer">Enter one or more origin-destination pairs and click Compare. The backend looks up each route in the dataset and returns the distance, price, and calculated ₹/km. Results are sorted by cost per km (lowest = best value) and displayed as a table, chart, and map.</div></div>
+    <div class="faq-item"><div class="faq-question">What does the Predictor show?<i class="fas fa-chevron-down faq-icon"></i></div><div class="faq-answer">The Predictor shows monthly average prices for a route throughout the year. It highlights the cheapest month to travel, the current price (estimated), potential savings, and a booking-time recommendation. Note: the prediction is based on historical trend data, not a live ML model.</div></div>
+    <div class="faq-item"><div class="faq-question">What is the Optimizer?<i class="fas fa-chevron-down faq-icon"></i></div><div class="faq-answer">The Optimizer shows nearby alternative airports for your origin and destination, and provides cabin class and layover comparisons for a route. This can help you find cheaper options by considering alternative departure points.</div></div>
+    <div class="faq-item"><div class="faq-question">What is the Heatmap?<i class="fas fa-chevron-down faq-icon"></i></div><div class="faq-answer">The Heatmap provides a geographic visualisation of flight cost concentrations across India. It helps you identify which regions tend to have higher or lower cost-per-km values at a glance.</div></div>
+
+    <div class="section-header mt-4"><h2>Technical</h2></div>
+    <div class="faq-item"><div class="faq-question">What technology powers this site?<i class="fas fa-chevron-down faq-icon"></i></div><div class="faq-answer">The backend is a Python Flask REST API deployed on Render cloud using Gunicorn with gevent async workers. The frontend is vanilla HTML, CSS, and JavaScript — no framework needed. Charts use Chart.js and maps use Leaflet.</div></div>
+    <div class="faq-item"><div class="faq-question">Why does the site sometimes show loading errors?<i class="fas fa-chevron-down faq-icon"></i></div><div class="faq-answer">The backend is hosted on Render's free tier, which spins down after inactivity. The first request after a period of inactivity may take 30-60 seconds to wake the server. Subsequent requests will be fast. If you see an error, wait a moment and try again.</div></div>
+  </div>
+</section>
+<footer class="footer"><div class="container"><div class="footer-bottom" style="border:none;padding:0;"><p>&copy; 2025 Flight Cost Intelligence. <a href="index.html" style="color:rgba(255,255,255,0.5);">Home</a></p></div></div></footer>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/images.js"></script>
+<script src="assets/js/common.js"></script>
+<script>
+document.querySelectorAll('.faq-question').forEach(q => {
+  q.addEventListener('click', () => {
+    q.closest('.faq-item').classList.toggle('open');
+  });
+});
+</script>
+</body>
+</html>

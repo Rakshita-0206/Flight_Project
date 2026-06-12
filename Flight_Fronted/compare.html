@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Compare Routes | Flight Cost Intelligence</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="icon" href="https://img.icons8.com/fluency/48/airplane-mode-on.png" type="image/png">
+</head>
+<body>
+<nav class="navbar">
+  <div class="container navbar-inner">
+    <a href="index.html" class="navbar-brand"><div class="brand-icon"><i class="fas fa-plane"></i></div>Flight Cost Intelligence</a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="compare.html" class="active">Compare</a></li>
+      <li><a href="route-finder.html">Route Finder</a></li>
+      <li><a href="predictor.html">Predictor</a></li>
+      <li><a href="optimizer.html">Optimizer</a></li>
+      <li><a href="heatmap.html">Heatmap</a></li>
+      <li><a href="visualizations.html">Visualizations</a></li>
+      <li><a href="faq.html">FAQ</a></li>
+    </ul>
+    <div class="nav-toggle" id="navToggle"><span></span><span></span><span></span></div>
+  </div>
+</nav>
+
+<section class="hero hero-sub" data-hero="compare">
+  <div class="hero-bg">
+    <img src="assets/images/sub-hero-compare.jpg" alt="Airplane wing above clouds — route comparison">
+  </div>
+  <div class="hero-overlay"></div>
+  <div class="container text-center">
+    <h1>Compare Routes by ₹ per km</h1>
+    <p>Add up to 5 routes and instantly see which offers the best value per kilometre.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <!-- Search Card -->
+    <div class="card mb-3">
+      <div class="card-body">
+        <div id="routes-container"></div>
+      <p id="route-hint" class="text-muted" style="font-size:0.8rem;margin-top:8px;margin-bottom:0;">Add at least 2 routes to compare them side by side.</p>
+        <div class="d-flex gap-2 flex-wrap mt-2">
+          <button id="add-route-btn" class="btn btn-ghost btn-sm">
+            <i class="fas fa-plus"></i> Add another route
+          </button>
+          <button id="compare-btn" class="btn btn-primary">
+            <i class="fas fa-search"></i> Compare routes
+          </button>
+          <button id="share-btn" class="btn btn-ghost" style="display:none;" onclick="shareCmp()"><i class="fas fa-share-nodes"></i> Share</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="results-section" style="display:none;">
+      <div id="compare-warnings" class="mb-2"></div>
+      <!-- Summary Cards -->
+      <div id="summary-cards" class="mb-3"></div>
+
+      <!-- Table -->
+      <div class="card mb-3">
+        <div class="card-header"><h3><i class="fas fa-table" style="color:var(--sky);margin-right:8px;"></i>Comparison Table</h3></div>
+        <div class="card-body" style="padding:0;">
+          <div class="table-wrapper" style="border:none;border-radius:0;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>From</th>
+                  <th>To</th>
+                  <th>Distance</th>
+                  <th>Total Price</th>
+                  <th>Cost per km</th>
+                </tr>
+              </thead>
+              <tbody id="comparison-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="card mb-3">
+        <div class="card-header"><h3><i class="fas fa-chart-bar" style="color:var(--sky);margin-right:8px;"></i>Cost per km Chart</h3></div>
+        <div class="card-body">
+          <div class="chart-wrap"><canvas id="comparison-chart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Map -->
+      <div class="card">
+        <div class="card-header"><h3><i class="fas fa-map-marked-alt" style="color:var(--sky);margin-right:8px;"></i>Route Map</h3></div>
+        <div class="card-body" style="padding:0;">
+          <div id="route-map" style="height:420px;border-radius:0 0 var(--radius-lg) var(--radius-lg);"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-bottom" style="border:none;padding:0;">
+      <p>&copy; 2025 Flight Cost Intelligence. <a href="index.html" style="color:rgba(255,255,255,0.5);">Home</a></p>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/images.js"></script>
+<script src="assets/js/common.js"></script>
+<script>
+let routeCount = 0;
+let chartInst  = null;
+let mapInst    = null;
+let allAirports = [];
+let lastResults = [];
+const routeColors = ['#1B6FEB','#F59E0B','#10B981','#EF4444','#8B5CF6'];
+
+function makeRouteBlock(n) {
+  return `
+  <div class="route-input-block" id="route-block-${n}">
+    <div class="route-label">
+      <span style="display:inline-flex;width:22px;height:22px;background:${routeColors[(n-1)%routeColors.length]};border-radius:50%;align-items:center;justify-content:center;color:white;font-size:0.75rem;font-weight:700;">${n}</span>
+      Route ${n}
+      ${n > 1 ? `<button class="btn btn-danger btn-sm remove-btn" style="margin-left:auto;" onclick="removeRoute(${n})"><i class="fas fa-times"></i></button>` : ''}
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">From</label>
+        <div class="select-wrapper">
+          <select id="origin-${n}" class="form-control"><option value="">Loading…</option></select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">To</label>
+        <div class="select-wrapper">
+          <select id="destination-${n}" class="form-control"><option value="">Loading…</option></select>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function removeRoute(n) { document.getElementById(`route-block-${n}`).remove(); }
+
+document.getElementById('add-route-btn').addEventListener('click', () => {
+  if (routeCount >= 5) { alert('Maximum 5 routes allowed.'); return; }
+  routeCount++;
+  document.getElementById('routes-container').insertAdjacentHTML('beforeend', makeRouteBlock(routeCount));
+  const sels = document.querySelectorAll(`#route-block-${routeCount} select`);
+  sels.forEach((s, i) => fillSelect(s, allAirports, i === 0 ? 'Select origin' : 'Select destination'));
+});
+
+async function init() {
+  allAirports = await fetchAirports();
+  routeCount  = 1;
+  document.getElementById('routes-container').innerHTML = makeRouteBlock(1);
+  const sels = document.querySelectorAll('#route-block-1 select');
+  sels.forEach((s, i) => fillSelect(s, allAirports, i === 0 ? 'Select origin' : 'Select destination'));
+
+  // Restore multi-route URL params: ?o0=DEL&d0=BOM&o1=BLR&d1=HYD
+  const p = new URLSearchParams(window.location.search);
+  let i = 0;
+  while (p.get(`o${i}`) && p.get(`d${i}`)) {
+    if (i > 0) {
+      routeCount++;
+      document.getElementById('routes-container').insertAdjacentHTML('beforeend', makeRouteBlock(routeCount));
+      const newSels = document.querySelectorAll(`#route-block-${routeCount} select`);
+      newSels.forEach((s, j) => fillSelect(s, allAirports, j === 0 ? 'Select origin' : 'Select destination'));
+    }
+    setTimeout(((idx, o, d) => () => {
+      const os = document.getElementById(`origin-${idx+1}`);
+      const ds = document.getElementById(`destination-${idx+1}`);
+      if (os) os.value = o;
+      if (ds) ds.value = d;
+    })(i, p.get(`o${i}`), p.get(`d${i}`)), 100);
+    i++;
+  }
+  // Legacy single-route params
+  if (!p.get('o0') && p.get('origin')) {
+    setTimeout(() => {
+      const os = document.getElementById('origin-1');
+      const ds = document.getElementById('destination-1');
+      if (os) os.value = p.get('origin');
+      if (ds) ds.value = p.get('destination') || '';
+      if (p.get('origin') && p.get('destination')) document.getElementById('compare-btn').click();
+    }, 300);
+  }
+  if (i > 0) setTimeout(() => document.getElementById('compare-btn').click(), 400);
+}
+
+function shareCmp() { copyShareUrl(lastResults.map(r => ({origin: r.origin, destination: r.destination}))); }
+
+document.getElementById('compare-btn').addEventListener('click', async () => {
+  const routes = [];
+  document.querySelectorAll('.route-input-block').forEach(block => {
+    const id = block.id.replace('route-block-', '');
+    const o  = document.getElementById(`origin-${id}`)?.value;
+    const d  = document.getElementById(`destination-${id}`)?.value;
+    if (o && d) routes.push({ origin: o, destination: d });
+  });
+  if (routes.length === 0) { alert('Please select at least one complete route.'); return; }
+
+  const sec = document.getElementById('results-section');
+  sec.style.display = 'block';
+  document.getElementById('compare-warnings').innerHTML = '';
+  document.getElementById('summary-cards').innerHTML =
+    '<div class="spinner-wrap"><div class="spinner"></div><span>Analysing routes…</span></div>';
+  document.getElementById('comparison-tbody').innerHTML = '';
+  document.getElementById('share-btn').style.display = 'none';
+
+  try {
+    const res = await apiCall(CONFIG.ENDPOINTS.COMPARE, { routes });
+    if (!res.success) throw new Error(res.error || 'Comparison failed.');
+    const warnings = [];
+    (res.skipped || []).forEach(r => {
+      warnings.push(`${r.origin || '?'} → ${r.destination || '?'}: ${r.reason}`);
+    });
+    (res.not_found || []).forEach(r => {
+      warnings.push(`${r.origin} → ${r.destination}: not in dataset`);
+    });
+    if (warnings.length) {
+      document.getElementById('compare-warnings').innerHTML =
+        `<div class="alert alert-warning"><i class="fas fa-info-circle"></i> ${warnings.join('; ')}</div>`;
+    }
+    if (!res.data || !res.data.length) throw new Error('No matching routes found in the dataset.');
+    lastResults = res.data.sort((a, b) => a.cost_per_km - b.cost_per_km);
+    renderSummary(lastResults);
+    renderTable(lastResults);
+    renderChart(lastResults);
+    renderMap(lastResults);
+    document.getElementById('share-btn').style.display = 'inline-flex';
+    history.replaceState(null, '', buildShareUrl(lastResults));
+    sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (e) {
+    document.getElementById('summary-cards').innerHTML =
+      `<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> ${e.message || 'Could not compare routes. Please try again.'}</div>`;
+  }
+});
+
+function renderSummary(data) {
+  document.getElementById('summary-cards').innerHTML = data.map((r, i) => `
+    <div class="flight-card ${i===0?'best':''}">
+      ${i===0?'<span class="best-badge"><i class="fas fa-trophy"></i> Best Value</span>':''}
+      <div class="flight-card-route">
+        <div class="flight-airport">
+          <div class="flight-airport-code">${r.origin}</div>
+          <div class="flight-airport-name">${getAirportCity(r.origin)}</div>
+        </div>
+        <div class="flight-route-mid">
+          <div class="flight-route-line"><div class="flight-route-icon"><i class="fas fa-plane"></i></div></div>
+          <div class="flight-dist">${fmtDist(r.distance)}</div>
+        </div>
+        <div class="flight-airport">
+          <div class="flight-airport-code">${r.destination}</div>
+          <div class="flight-airport-name">${getAirportCity(r.destination)}</div>
+        </div>
+      </div>
+      <div class="flight-price-block">
+        <div class="flight-price">${fmtPrice(r.price)}</div>
+        <div class="flight-cpkm">${fmtCPK(r.cost_per_km)}</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderTable(data) {
+  document.getElementById('comparison-tbody').innerHTML = data.map((r, i) => `
+    <tr class="${i===0?'best-row':''}">
+      <td><span class="badge ${i===0?'badge-blue':'badge-gray'}">#${i+1}</span></td>
+      <td><span class="font-mono fw-bold">${r.origin}</span><br><small class="text-muted">${getAirportCity(r.origin)}</small></td>
+      <td><span class="font-mono fw-bold">${r.destination}</span><br><small class="text-muted">${getAirportCity(r.destination)}</small></td>
+      <td class="font-mono">${fmtDist(r.distance)}</td>
+      <td class="fw-bold">${fmtPrice(r.price)}</td>
+      <td><span class="fw-bold ${i===0?'text-primary-color':''}">${fmtCPK(r.cost_per_km)}</span>${i===0?' <span class="badge badge-blue">Best</span>':''}</td>
+    </tr>`).join('');
+}
+
+function renderChart(data) {
+  if (chartInst) chartInst.destroy();
+  chartInst = new Chart(document.getElementById('comparison-chart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: data.map(r => `${r.origin}→${r.destination}`),
+      datasets: [{
+        label: '₹ per km',
+        data:  data.map(r => r.cost_per_km),
+        backgroundColor: data.map((_, i) => i === 0 ? '#1B6FEB' : '#C9D4EA'),
+        borderRadius: 6, borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => [`₹${c.parsed.y.toFixed(2)}/km`, `Total: ${fmtPrice(data[c.dataIndex].price)}`, `Distance: ${fmtDist(data[c.dataIndex].distance)}`] } }
+      },
+      scales: {
+        y: { beginAtZero: false, title: { display: true, text: '₹ per km' }, ticks: { callback: v => '₹' + v.toFixed(1) } },
+        x: { ticks: { font: { family: 'DM Mono, monospace', weight: '500' } } }
+      }
+    }
+  });
+}
+
+function renderMap(data) {
+  if (mapInst) { mapInst.remove(); mapInst = null; }
+  mapInst = L.map('route-map').setView([22.5937, 78.9629], 5);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(mapInst);
+  const placed = {};
+  data.forEach((r, i) => {
+    const oc = getAirportCoords(r.origin);
+    const dc = getAirportCoords(r.destination);
+    const color = routeColors[i % routeColors.length];
+    if (!oc || !dc) return;
+    if (!placed[r.origin]) {
+      placed[r.origin] = true;
+      L.circleMarker(oc, { radius:7, fillColor:color, color:'#fff', fillOpacity:1, weight:2 })
+        .addTo(mapInst).bindPopup(`<b>${r.origin}</b><br>${getAirportCity(r.origin)}`);
+    }
+    if (!placed[r.destination]) {
+      placed[r.destination] = true;
+      L.circleMarker(dc, { radius:7, fillColor:color, color:'#fff', fillOpacity:1, weight:2 })
+        .addTo(mapInst).bindPopup(`<b>${r.destination}</b><br>${getAirportCity(r.destination)}`);
+    }
+    L.polyline([oc, dc], { color, weight: i===0?3:2, opacity:0.8, dashArray: i===0?null:'6,5' })
+      .addTo(mapInst)
+      .bindPopup(`<b>${r.origin} → ${r.destination}</b><br>${fmtDist(r.distance)} · ${fmtCPK(r.cost_per_km)}${i===0?'<br><b>Best Value</b>':''}`);
+  });
+  setTimeout(() => mapInst.invalidateSize(), 100);
+}
+
+init();
+</script>
+</body>
+</html>
