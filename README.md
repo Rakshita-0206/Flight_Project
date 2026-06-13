@@ -12,8 +12,8 @@
 |---|---|
 | 🌐 **Live Site** | https://pawankushwahh.github.io/Flight_per_km_cost/ |
 | ⚙️ **Live API** | https://flight-cost-intelligence-api.onrender.com |
-| 📁 **Frontend repo** | https://github.com/pawankushwahh/Flight_per_km_cost |
-| 📁 **Backend repo** | https://github.com/pawankushwahh/Flight_per_km_backend |
+| 📁 **Frontend repo** | https://github.com/Rakshita-0206/Flight_Project/tree/main/Flight_Fronted |
+| 📁 **Backend repo** | https://github.com/Rakshita-0206/Flight_Project/tree/main/Flight_backend |
 
 ---
 
@@ -184,7 +184,7 @@ git commit -m "Your message"
 git push origin main
 ```
 
-Live at: https://pawankushwahh.github.io/Flight_per_km_cost/
+Live at: https://Rakshita-0206.github.io/Flight_Project/
 
 ### Backend → Render
 
@@ -292,7 +292,6 @@ pytest tests/ -v
 | Name | GitHub |
 |------|--------|
 | Rakshita | [@Rakshita-0206](https://github.com/Rakshita-0206) |
-| Pawan Kushwah | [@pawankushwahh](https://github.com/pawankushwahh) |
 | Shalini | — |
 
 📍 Lucknow, India
